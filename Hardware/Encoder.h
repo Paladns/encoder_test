@@ -9,5 +9,6 @@
 void Start_Encoder(void);
 //获取编码器的值
 int Get_Encoder(void);
+float Read_Encoder_Speed(void);
 
 #endif

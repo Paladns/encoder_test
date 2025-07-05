@@ -26,6 +26,8 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "Encoder.h"
+#include "tb6612.h"
+#include "pid.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +48,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+PID_Controller pid_;
+float current_speed = 0, target_speed=100;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -57,7 +60,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-int cnt = 0;
+
 /* USER CODE END 0 */
 
 /**
@@ -91,19 +94,35 @@ int main(void)
   MX_GPIO_Init();
   MX_TIM3_Init();
   MX_USART2_UART_Init();
+  MX_TIM1_Init();
+  MX_TIM4_Init();
   /* USER CODE BEGIN 2 */
+  Global_TIM_Init();
+  motor_Init();
 	Start_Encoder();
 	printf("12120");
+  PID_Init(&pid_,3.5,0.5,0);
+  // Set_Speed(500);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-			cnt = Get_Encoder();
-			printf("编码值：%d\r\n",cnt);	//760大概
-			//printf("串口重映射\r\n");
-			//HAL_Delay(1000);	//毫秒为单位
+      //1.先获取转速
+      current_speed = Read_Encoder_Speed();
+
+      //2.计算pwm
+      float pwm = PID_Update(&pid_,target_speed,current_speed,0.01);
+
+      // pwm = (pwm > 3600) ? 3600 : (pwm < 0) ? 0 : pwm;
+      Set_Speed(pwm);
+
+			printf("%lf,%lf,%lf \n",current_speed,target_speed,pwm);	//760大概
+			// printf("编码值：%d\r\n",cnt);	//760大概
+			
+
+      HAL_Delay(10);
 		
     /* USER CODE END WHILE */
 
